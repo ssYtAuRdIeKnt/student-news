@@ -41,3 +41,6 @@ e2e/node_modules/
 e2e/playwright-report/
 e2e/test-results/
 e2e/.e2e-docker-started
+
+# Local before/after comparison for Homework 12 (not part of the repo)
+hw12-compare/

@@ -52,5 +52,33 @@ services:
       # The UI stays at http://localhost:5173; nginx inside listens on 8080.
       - "5173:8080"
 
+  avatar-service:
+    build:
+      context: ./avatar-service
+    container_name: student-news-avatar-service
+    environment:
+      # The three settings the service reads (see avatar-service/README.md).
+      # The values are the defaults, written out so the configuration is visible.
+      PORT: "8090"
+      UPLOAD_DIR: /data/avatars
+      MAX_BYTES: "2097152"   # 2 MiB
+    ports:
+      # The news UI calls this service from the browser, i.e. from the host,
+      # so it must be published: http://localhost:8090.
+      - "8090:8090"
+    volumes:
+      # Named volume: the pictures survive `docker compose down` and image
+      # rebuilds. Only `docker compose down -v` deletes them.
+      - avatar_data:/data/avatars
+    healthcheck:
+      # The image has no curl; BusyBox wget exits non-zero on a 503, so the
+      # check fails whenever /health reports that the directory is unusable.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8090/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+
 volumes:
   postgres_data:
+  avatar_data:

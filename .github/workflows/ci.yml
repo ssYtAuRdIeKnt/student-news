@@ -134,9 +134,8 @@ jobs:
           retention-days: 7
 
   # ---------------------------------------------------------------- stage 1
-  # The Homework 12 starter. Only its tests run here: its Dockerfile is empty
-  # on purpose (writing it is the homework), so it stays out of the package
-  # matrix below.
+  # Homework 12. Its tests run here; its image is built in the package matrix
+  # below, next to backend and frontend.
   avatar-service-test:
     name: Avatar service · tests
     runs-on: ubuntu-latest
@@ -168,13 +167,13 @@ jobs:
   # spending minutes building images for code whose tests already failed.
   package:
     name: Package · container images
-    needs: [frontend-lint, backend-test, backend-integration-test, frontend-build]
+    needs: [frontend-lint, backend-test, backend-integration-test, frontend-build, avatar-service-test]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        service: [backend, frontend]
+        service: [backend, frontend, avatar-service]
     steps:
       - uses: actions/checkout@v7
 
