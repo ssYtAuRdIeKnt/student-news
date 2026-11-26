@@ -1,0 +1,63 @@
+# avatar-service (stores the picture of each news post): the pod (Deployment)
+# and a stable name in front of it (Service).
+#
+# No ConfigMap, volume or probes yet: the image's defaults (PORT 8090,
+# UPLOAD_DIR /data/avatars, 2 MiB limit) are used as they are. Configuration,
+# storage and health checks are Homework 14. Until then the pictures live in
+# the container's own filesystem and are lost when the pod is replaced.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: avatar-service
+  namespace: student-news
+  labels:
+    app: avatar-service
+spec:
+  # One pod only. The pictures are files inside the pod, so a second pod would
+  # have its own, different set: the Service would send an upload to one pod
+  # and the download to the other, which answers 404.
+  replicas: 1
+  # The Deployment (through its ReplicaSet) owns every pod with this label.
+  # It must match the labels in the template below.
+  selector:
+    matchLabels:
+      app: avatar-service
+  template:
+    metadata:
+      labels:
+        app: avatar-service
+    spec:
+      containers:
+        - name: avatar-service
+          # An explicit version, never :latest, as for the backend. The image
+          # only exists locally (docker build, then `minikube image load`).
+          image: avatar-service:1.0
+          # Use the image already on the node; pull only when it is missing.
+          imagePullPolicy: IfNotPresent
+          ports:
+            # The port the Spring Boot app listens on (PORT, default 8090).
+            - containerPort: 8090
+          # The image already runs as the `app` user (USER 10001:10001 in
+          # avatar-service/Dockerfile). Stating it here makes Kubernetes
+          # enforce it: a pod that would run as root is refused.
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            allowPrivilegeEscalation: false
+---
+# One stable name, `avatar-service`, in front of the pod. Inside the cluster
+# it resolves to the Service; from the laptop it is reached with
+# `kubectl port-forward` (the browser loads the pictures, see the README).
+apiVersion: v1
+kind: Service
+metadata:
+  name: avatar-service
+  namespace: student-news
+spec:
+  type: ClusterIP
+  selector:
+    app: avatar-service
+  ports:
+    - port: 8090         # port of the Service
+      targetPort: 8090   # port of the container

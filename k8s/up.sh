@@ -11,7 +11,8 @@ set -euo pipefail
 # Work from the repository root, wherever the script was started from.
 cd "$(dirname "$0")/.."
 
-# Must match the image tags in k8s/03-backend.yaml and k8s/04-frontend.yaml.
+# Must match the image tags in k8s/03-backend.yaml, k8s/04-frontend.yaml and
+# k8s/05-avatar-service.yaml.
 TAG=1.0
 
 # Safety net: only ever deploy to the local minikube cluster.
@@ -36,23 +37,26 @@ fi
 echo "==> Building images"
 docker build -t "student-news-backend:$TAG" ./backend
 docker build -t "student-news-frontend:$TAG" ./frontend
+docker build -t "avatar-service:$TAG" ./avatar-service
 
 echo "==> Loading images into minikube"
 minikube image load "student-news-backend:$TAG"
 minikube image load "student-news-frontend:$TAG"
+minikube image load "avatar-service:$TAG"
 
 echo "==> Applying manifests"
 kubectl apply -f k8s/
 
 echo "==> Waiting for rollouts"
-for deployment in db backend frontend; do
+for deployment in db backend frontend avatar-service; do
   kubectl rollout status "deployment/$deployment" -n student-news --timeout=180s
 done
 
 kubectl get pods,svc,pvc -n student-news
 
 echo
-echo "Ready. Open the app with two port-forwards (one terminal each):"
+echo "Ready. Open the app with three port-forwards (one terminal each):"
 echo "  kubectl port-forward -n student-news service/backend 8080:8080"
 echo "  kubectl port-forward -n student-news service/frontend 5173:8080"
+echo "  kubectl port-forward -n student-news service/avatar-service 8090:8090"
 echo "Then browse to http://localhost:5173"

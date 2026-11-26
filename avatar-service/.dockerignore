@@ -1,0 +1,23 @@
+# The image is built from pom.xml and src/ only. Everything below is either
+# rebuilt inside the image or has no business in it.
+
+# Build output: the JAR is built inside the image, never copied from the host.
+target/
+
+# Local uploads (the folder the README suggests for runs without Docker).
+data/
+
+# IDE and OS files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Version control and local secrets
+.git
+.env
+.env.*
